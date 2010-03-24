@@ -26,6 +26,8 @@
 
     FLQ.event = new Object()
 
+    FLQ.event.f = {}
+
     /**
      * addListener() will add a listener to an element for a given event
      */
@@ -36,11 +38,11 @@
         if (typeof ele.addEventListener != 'undefined') {
             ele.addEventListener(event, fRef, cap)
         } else if (typeof ele.attachEvent != 'undefined') {
-            ele.attachEvent('on' + event, fRef)
+            ele.attachEvent('on' + event, FLQ.event.getFunc(ele, event, fRef))
         }
     }
 
-    FLQ.event.add = function(ele, event, fRef, cap) { FLQ.event.addListener(ele, event, fRef, cap) }
+    FLQ.event.add = FLQ.event.addListener
 
     /**
      * getXY() will return an array of the X and Y coord's of the event
@@ -63,8 +65,18 @@
         if (typeof ele.removeEventListener != 'undefined') {
             ele.removeEventListener(event, fRef, capture)
         } else if (typeof ele.detachEvent != 'undefinded') {
-            ele.detachEvent('on' + event, fRef)
+            var f = FLQ.event.getFunc(ele, event, fRef)
+            ele.detachEvent('on' + event, f)
+            delete f
         }
+    }
+
+    FLQ.event.getFunc = function (ele, event, fRef) {
+        if (typeof FLQ.event.f[event] == 'undefined') FLQ.event.f[event] = {}
+        if (typeof FLQ.event.f[event][ele] == 'undefined') FLQ.event.f[event][ele] = {}
+        if (typeof FLQ.event.f[event][ele][fRef] == 'undefined') FLQ.event.f[event][ele][fRef] = {}
+        FLQ.event.f[event][ele][fRef] = function (e) { if (!e) e = window.event; fRef.apply(ele, [e]) }
+        return FLQ.event.f[event][ele][fRef];
     }
 
     /**
@@ -88,22 +100,22 @@
             e.cancelBubble = true
         }
     }
-	
-	/**
-	 * prevDef will prevent the default event action from occuring (preventDefault)
-	 */
-	FLQ.event.prevDef = function(e) {
-		if (typeof e.preventDefault != 'undefined') {
-			e.preventDefault()
-		} else {
-			e.returnValue = false
-		}
-	}
-	
-	/**
-	 * stopEvent is a wrapper for stopProp and prevDef methods
-	 */
-	FLQ.event.stopEvent(e) {
-		FLQ.event.stopProp(e)
-		FLQ.event.prevDef(e)
-	}
+
+    /**
+     * prevDef will prevent the default event action from occuring (preventDefault)
+     */
+    FLQ.event.prevDef = function(e) {
+        if (typeof e.preventDefault != 'undefined') {
+            e.preventDefault()
+        } else {
+            e.returnValue = false
+        }
+    }
+
+    /**
+     * stopEvent is a wrapper for stopProp and prevDef methods
+     */
+    FLQ.event.stopEvent = function (e) {
+        FLQ.event.stopProp(e)
+        FLQ.event.prevDef(e)
+    }
